@@ -1,10 +1,10 @@
 import math
 import random
-from state import AbstractState as State, AbstractAction as Action
+from state import AbstractState, AbstractAction
 
 
 class Node(object):
-    def __init__(self, state: State):
+    def __init__(self, state: AbstractState):
         """ Create a Node object with given state
         """
         self._state = state
@@ -15,7 +15,7 @@ class Node(object):
         self.num_samples = 0
 
     @property
-    def state(self) -> State:
+    def state(self) -> AbstractState:
         return self._state
 
     @property
@@ -48,7 +48,7 @@ class Node(object):
         """
         return len(self._untried_edges) == 0
 
-    def add_child(self, action: Action) -> "Node":
+    def add_child(self, action: AbstractAction) -> "Node":
         """ Add a child node and set the parent of the child node and return the
             child node
         :param action: The action that would lead the current node to the child
@@ -85,7 +85,7 @@ class Node(object):
         return str(self._state)
 
 
-def select(node: Node, exploration_const: float = 1.0) -> (Action, Node):
+def select(node: Node, exploration_const: float = 1.0) -> (AbstractAction, Node):
     """ Select the best child node based on UCB; if there are multiple
         child nodes with the max UCB, randomly select one
     :param node: The parent node
@@ -121,7 +121,7 @@ def expand(node: Node) -> Node:
     return node.add_child(action)
 
 
-def default_rollout_policy(state: State) -> float:
+def default_rollout_policy(state: AbstractState) -> float:
     """ The default policy for simulation is to randomly (uniform distribution)
         select an action to update the state and repeat the simulation until
         a terminal state is reached
@@ -182,8 +182,8 @@ def execute_round(root: Node, max_tree_depth: int = 15,
 
 
 class MonteCarloSearchTree:
-    def __init__(self, initial_state: State, samples: int = 1000,
-                 exploration_const: float = 1.0, max_tree_depth: int = 10,
+    def __init__(self, initial_state: AbstractState, samples: int = 1000,
+                 max_tree_depth: int = 10,
                  tree_select_policy=select, tree_expand_policy=expand,
                  rollout_policy=default_rollout_policy,
                  backpropagate_method=backpropagate):
@@ -191,7 +191,6 @@ class MonteCarloSearchTree:
         :param initial_state: The initial state
         :param samples: The number of samples to generate to obtain the best
                 action
-        :param exploration_const: The constant on the second term of UCB
         :param max_tree_depth: The maximal allowable number of nodes in the tree
         :param tree_select_policy: The selection part of tree policy
         :type tree_select_policy: A function that takes a Node object as input
@@ -212,7 +211,6 @@ class MonteCarloSearchTree:
         if samples <= 0 or max_tree_depth <= 1:
             raise ValueError("The number of samples must be positive")
         self._max_samples = samples
-        self._exploration_const = exploration_const
         self._tree_select_policy = tree_select_policy
         self._tree_expand_policy = tree_expand_policy
         self._rollout_policy = rollout_policy
@@ -267,7 +265,7 @@ class MonteCarloSearchTree:
                           backpropagate_method=self._back_propagate_policy)
         return self._search(self._root, search_depth)[1]
 
-    def update_root(self, action: Action) -> "MonteCarloSearchTree":
+    def update_root(self, action: AbstractAction) -> "MonteCarloSearchTree":
         """ Update the root node to reflect the new state after an action is
             taken
         :param action: The action that brings a new state
